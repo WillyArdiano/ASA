@@ -1,0 +1,192 @@
+package com.mycompany.sumamultiplicacion.gramatica;
+
+import java_cup.runtime.*;
+import java.util.ArrayList;
+
+class Parser;
+
+parser code{:
+
+        private ArrayList<String> pila = new ArrayList<>();
+	private int resultado;
+        private int id = 0;
+        private int idRank = 0;
+        private String[] nodoEP;
+        private String nodoAux;
+        private String codigoImg = "graph g {\n";
+
+        public int getResultado(){
+            return this.resultado;
+        }
+
+        public String getCodigoImg(){
+            return this.codigoImg;
+        }
+
+        private int getNum(Object num){
+            return Integer.valueOf(String.valueOf(num));
+        }
+
+        private String getNodo(int i, String lbl){
+            return "    nodo"+String.valueOf(i)+"[label=\""+lbl+"\"];\n";
+        }
+
+        private void pilaPop(){
+            if(pila.size()>0){
+                pila.remove(pila.size()-1);
+            }
+        }
+
+        private String conectar(String n1, String[] n2){
+            String codigo ="";
+
+            if(n2.length>1){
+                codigo += "    rank"+idRank+" [style=invisible];\n";
+                idRank++;
+                codigo += "    rank"+idRank+" [style=invisible];\n";
+                idRank++;
+                codigo += "rank"+(idRank-2)+" -- rank"+(idRank-1)+" [color=white];";
+            }
+
+            for(int i=0; i<n2.length; i++){
+                codigo += "    "+n1+"--"+n2[i]+";\n";
+            }
+
+            if(n2.length>1){
+                codigo += "     {\n         rank=same;\n        rank"+(idRank-1);
+                for(int i=0; i<n2.length; i++){
+                    codigo += " -- "+n2[i];
+                }
+                codigo += " [ style=invis ]; rankdir = LR;     \n}\n";
+            }
+
+            return codigo;
+        }
+
+        private String ultimoPila(){
+            return pila.get(pila.size()-1);
+        }
+:}
+
+//terminales
+
+terminal NUMERO, MAS, POR, PAR_A, PAR_C;
+
+//no terminales
+
+non terminal inicial, e, ep, t, tp, f;
+
+inicial ::= e:num
+                {: 
+                    resultado = getNum(num); 
+                    codigoImg += "\n}";
+                :}
+        ;
+
+e ::= t:t ep:ep 
+        {:
+            if(ep == null){
+                RESULT = t;
+            }else{
+                RESULT = getNum(t) + getNum(ep);
+            }
+        :}
+    ;
+
+ep ::= MAS 
+        {:
+            codigoImg += getNodo(id,"+");
+            pila.add("nodo"+id);
+            codigoImg += conectar(ultimoPila(),nodoEP);
+            id++;
+        :}
+         t:t
+        {:
+            codigoImg += conectar(ultimoPila(),nodoEP);
+            String[] arreglo = {ultimoPila()};
+            nodoEP = arreglo;
+            pilaPop();
+        :}
+         ep:ep
+        {:            
+            if(ep == null){
+                RESULT = t;
+            }else{
+                RESULT = getNum(t) + getNum(ep);
+            }
+        :}
+    |
+        {:
+            RESULT = null;
+        :}
+    ;
+
+t ::= f:f tp:tp
+        {:
+            if(tp == null){
+                RESULT = f;
+            }else{
+                RESULT = getNum(f) * getNum(tp);
+            }
+        :}
+    ;
+
+tp ::= POR 
+        {:
+            codigoImg += getNodo(id,"*");
+            pila.add("nodo"+id);
+            codigoImg += conectar(ultimoPila(),nodoEP);
+            id++;
+        :}
+        f:f
+        {:
+            codigoImg += conectar(ultimoPila(),nodoEP);
+            String[] arreglo = {ultimoPila()};
+            nodoEP = arreglo;
+            pilaPop();
+        :}
+        tp:tp 
+        {:
+            if(tp == null){
+                RESULT = f;
+            }else{
+                RESULT = getNum(f) * getNum(tp);
+            }
+        :}
+    | 
+        {:
+            RESULT = null;
+        :}
+    ;
+
+f ::= NUMERO:num 
+        {:
+            codigoImg += getNodo(id,String.valueOf(num));
+            String[] arreglo = {"nodo"+id};
+            nodoEP = arreglo;
+            id++;
+            RESULT =  num; 
+        :}
+    ;
+
+f ::= PAR_A e:e PAR_C 
+        {:
+            int id1 = id;
+            id++;
+            int id2 = id;
+            id++;
+            codigoImg += getNodo(id1,"(");
+            codigoImg += getNodo(id2,")");
+            
+            String[] arreglo4 = new String[nodoEP.length+2];
+            arreglo4[0] = "nodo"+id1;
+            for(int i=1; i<nodoEP.length+1; i++){
+                arreglo4[i] = nodoEP[i-1];
+            }
+            arreglo4[nodoEP.length+1] = "nodo"+id2;
+            nodoEP = arreglo4;
+
+            RESULT = e;
+        :}
+    ;
+
