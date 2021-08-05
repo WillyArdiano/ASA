@@ -8,6 +8,7 @@ package com.mycompany.sumamultiplicacion.ui;
 import com.mycompany.sumamultiplicacion.Archivo;
 import com.mycompany.sumamultiplicacion.gramatica.Lexer;
 import com.mycompany.sumamultiplicacion.gramatica.Parser;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -164,6 +165,7 @@ public class Principal extends javax.swing.JDialog {
             parser.parse();
             
             JOptionPane.showMessageDialog(this, "El resultado es: "+parser.getResultado());
+            JOptionPane.showMessageDialog(this, "La notación postfijo es: "+parser.getPostfijo());
             
             //generando imagen
             try {
@@ -174,6 +176,9 @@ public class Principal extends javax.swing.JDialog {
             } catch (IOException i) {
                 JOptionPane.showMessageDialog(this, "Error al generar imagen.");
             }
+            
+            File file = new File("arbol.png");
+            Desktop.getDesktop().open(file);
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error en sintaxis.");
